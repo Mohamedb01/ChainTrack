@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 const CreateProduct = ({ contract }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [origin, setOrigin] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -11,11 +12,12 @@ const CreateProduct = ({ contract }) => {
         if (!contract) return;
         setLoading(true);
         try {
-            const tx = await contract.createProduct(name, description);
+            const tx = await contract.createProduct(name, description, origin);
             await tx.wait();
             alert('Product created successfully!');
             setName('');
             setDescription('');
+            setOrigin('');
         } catch (error) {
             console.error(error);
             alert('Error creating product: ' + error.message);
@@ -45,6 +47,16 @@ const CreateProduct = ({ contract }) => {
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label>Origin:</label>
+                    <input
+                        type="text"
+                        value={origin}
+                        onChange={(e) => setOrigin(e.target.value)}
+                        placeholder="e.g., Paris, France"
                         required
                     />
                 </div>

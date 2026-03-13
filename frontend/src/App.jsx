@@ -1,134 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import CreateProduct from './components/CreateProduct';
-import TransferProduct from './components/TransferProduct';
-import ProductHistory from './components/ProductHistory';
-import SupplyChainABI from './abi/SupplyChain.json';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import SupplyChainABI from "./abi/SupplyChain.json";
+import CreateProduct from "./components/CreateProduct";
+import TrackProduct from "./components/TrackProduct";
+import "./App.css";
 
-// You would typically replace this with the deployed contract address
-// For now, we'll leave it as a placeholder or empty string to be filled by user
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
-function App() {
+const App = () => {
+  const [account, setAccount] = useState("");
   const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState('');
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState("track");
+  const [manualAddress, setManualAddress] = useState("");
 
   useEffect(() => {
-    // Optional: Auto-connect logic or verify network
+    if (window.ethereum) {
+      window.ethereum.request({ method: "eth_accounts" }).then((accounts) => {
+        if (accounts.length > 0) {
+          connectWallet();
+        }
+      });
+    }
   }, []);
 
   const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
+    try {
+      let signer;
+      let address;
+
+      if (window.ethereum) {
         const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        setAccount(await signer.getAddress());
-
-        // If we have a contract address, instantiate the contract
-        if (CONTRACT_ADDRESS && CONTRACT_ADDRESS !== "YOUR_CONTRACT_ADDRESS_HERE") {
-          const supplyChainContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
-            SupplyChainABI.abi,
-            signer
-          );
-          setContract(supplyChainContract);
-        } else {
-          // For demo purposes if no address is set, we can't interact
-          console.warn("Contract address not set in App.jsx");
-        }
-
-      } catch (err) {
-        console.error("Error connecting wallet:", err);
+        signer = await provider.getSigner();
+        address = await signer.getAddress();
+      } else {
+        console.warn("No ethereum provider found. Falling back to local Hardhat node.");
+        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+        signer = await provider.getSigner(); 
+        address = await signer.getAddress();
       }
-    } else {
-      alert("Please install Metamask!");
+      
+      setAccount(address);
+
+      if (CONTRACT_ADDRESS && CONTRACT_ADDRESS !== "YOUR_CONTRACT_ADDRESS_HERE") {
+        const supplyChainContract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          SupplyChainABI.abi,
+          signer
+        );
+        setContract(supplyChainContract);
+      }
+    } catch (err) {
+      console.error("Error connecting wallet:", err);
+      alert("Error connecting wallet. Ensure Hardhat node is running.");
     }
   };
 
-  // Helper to handle manual address input for testing
-  const [manualAddress, setManualAddress] = useState('');
   const setContractAddress = async () => {
-    if (window.ethereum && manualAddress) {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const supplyChainContract = new ethers.Contract(
-        manualAddress,
-        SupplyChainABI.abi,
-        signer
-      );
-      setContract(supplyChainContract);
-      alert("Contract connected!");
+    if (manualAddress) {
+      try {
+        let signer;
+        if (window.ethereum) {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+        } else {
+          const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+          signer = await provider.getSigner(); 
+        }
+        const supplyChainContract = new ethers.Contract(
+          manualAddress,
+          SupplyChainABI.abi,
+          signer
+        );
+        setContract(supplyChainContract);
+        alert("Contract connected!");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to connect to contract address.");
+      }
     }
-  }
+  };
 
   return (
-    <div className="App">
-      <div className="glass-panel" style={{ minHeight: '85vh', padding: '0' }}>
-        <header className="app-header">
-          <h1>📦 Supply Chain</h1>
-          {!account ? (
-            <button onClick={connectWallet} className="connect-btn">Connect Wallet</button>
-          ) : (
-            <div className="wallet-info">
-              <span className="status-dot"></span>
-              <p>{account.slice(0, 6)}...{account.slice(-4)}</p>
+    <>
+      <div className="background-blobs">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
+      </div>
+      
+      <div className="App">
+        <header className="app-header glass-panel">
+          <h1>⛓️ ChainTrack</h1>
+          {account ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ 
+                background: 'rgba(16, 185, 129, 0.1)', 
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                color: '#10b981', 
+                padding: '0.5rem 1rem', 
+                borderRadius: '20px', 
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }}></div>
+                {account.slice(0, 6)}...{account.slice(-4)}
+              </div>
             </div>
+          ) : (
+            <button className="action-btn" onClick={connectWallet} style={{ width: 'auto', margin: 0, padding: '0.75rem 1.5rem' }}>
+              Connect Wallet
+            </button>
           )}
         </header>
 
-        <div style={{ padding: '0 2rem 2rem 2rem' }}>
-          {account && !contract && (
-            <div className="setup-contract">
-              <h2>🔗 Connect to Contract</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                Enter the deployed contract address to start interacting.
-              </p>
-              <label>Contract Address</label>
+        {account && !contract && (
+          <div className="setup-contract glass-panel">
+            <h2 style={{ fontSize: '2rem', marginBottom: '1rem', background: 'linear-gradient(135deg, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>🔗 Connect to Contract</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Enter the deployed contract address to interact with the supply chain.</p>
+            <div style={{display: 'flex', gap: '1rem'}}>
               <input
                 value={manualAddress}
                 onChange={e => setManualAddress(e.target.value)}
                 placeholder="0x..."
+                style={{margin: 0, flex: 1}}
               />
-              <button onClick={setContractAddress}>Connect</button>
+              <button className="action-btn" onClick={setContractAddress} style={{margin: 0, width: 'auto'}}>Connect</button>
             </div>
-          )}
+          </div>
+        )}
 
-          {contract && (
-            <main>
-              <nav className="tabs">
-                <button
-                  onClick={() => setActiveTab('create')}
-                  className={activeTab === 'create' ? 'active' : ''}
-                >
-                  Create Product
-                </button>
-                <button
-                  onClick={() => setActiveTab('transfer')}
-                  className={activeTab === 'transfer' ? 'active' : ''}
-                >
-                  Transfer Product
-                </button>
-                <button
-                  onClick={() => setActiveTab('history')}
-                  className={activeTab === 'history' ? 'active' : ''}
-                >
-                  Product History
-                </button>
-              </nav>
+        {account && contract && (
+          <div className="dashboard-container">
+            <div className="tabs">
+              <button 
+                className={activeTab === 'create' ? 'active' : ''} 
+                onClick={() => setActiveTab('create')}
+              >✨ Mint Item</button>
+              <button 
+                className={activeTab === 'track' ? 'active' : ''} 
+                onClick={() => setActiveTab('track')}
+              >🔍 Track & Manage</button>
+            </div>
 
-              <div className="content glass-panel" style={{ border: 'none', background: 'rgba(255,255,255,0.03)' }}>
-                {activeTab === 'create' && <CreateProduct contract={contract} />}
-                {activeTab === 'transfer' && <TransferProduct contract={contract} />}
-                {activeTab === 'history' && <ProductHistory contract={contract} />}
-              </div>
+            <main className="content glass-panel" style={{ position: 'relative', zIndex: 10 }}>
+              {activeTab === 'create' && <CreateProduct contract={contract} />}
+              {activeTab === 'track' && <TrackProduct contract={contract} account={account} />}
             </main>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
-}
+};
 
 export default App;
