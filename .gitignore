@@ -2,3 +2,13 @@
 *.odt
 *.py
 *.txt
+
+# Security & Secrets
+.env*
+node_modules/
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

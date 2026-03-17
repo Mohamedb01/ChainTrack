@@ -1,6 +1,31 @@
 import React, { useState } from 'react';
 
-const TrackProduct = ({ contract, account }) => {
+const IconPackage = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
+const IconHistory = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 8v4l3 3" />
+    <circle cx="12" cy="12" r="9" />
+  </svg>
+);
+
+const IconSearch = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+);
+
+const SkeletonCard = () => (
+    <div className="glass-panel shimmer" style={{ height: '200px', marginBottom: '1.5rem', borderRadius: '24px' }}></div>
+);
+
+const TrackProduct = ({ contract, account, showToast }) => {
     const [productId, setProductId] = useState('');
     const [productData, setProductData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -29,7 +54,7 @@ const TrackProduct = ({ contract, account }) => {
             });
         } catch (error) {
             console.error(error);
-            alert('Error fetching product: ' + error.message);
+            if (showToast) showToast('Error fetching product: ' + error.message, 'error');
             setProductData(null);
         }
         setLoading(false);
@@ -46,12 +71,12 @@ const TrackProduct = ({ contract, account }) => {
         try {
             const tx = await contract.updateProduct(productData.id, updateDetails);
             await tx.wait();
-            alert('Status updated successfully!');
+            showToast('Status updated successfully!', 'success');
             setUpdateDetails('');
             await fetchProduct(productData.id); // Refresh
         } catch (error) {
             console.error(error);
-            alert('Error updating status: ' + error.message);
+            showToast('Error updating status: ' + error.message, 'error');
         }
         setActionLoading(false);
     };
@@ -62,13 +87,13 @@ const TrackProduct = ({ contract, account }) => {
         try {
             const tx = await contract.transferProduct(productData.id, transferAddress, transferDetails);
             await tx.wait();
-            alert('Ownership transferred successfully!');
+            showToast('Ownership transferred successfully!', 'success');
             setTransferAddress('');
             setTransferDetails('');
             await fetchProduct(productData.id); // Refresh
         } catch (error) {
             console.error(error);
-            alert('Error transferring ownership: ' + error.message);
+            showToast('Error transferring ownership: ' + error.message, 'error');
         }
         setActionLoading(false);
     };
@@ -79,11 +104,11 @@ const TrackProduct = ({ contract, account }) => {
         try {
             const tx = await contract.deactivateProduct(productData.id);
             await tx.wait();
-            alert('Product archived successfully!');
+            showToast('Product archived successfully!', 'success');
             await fetchProduct(productData.id); // Refresh
         } catch (error) {
             console.error(error);
-            alert('Error archiving product: ' + error.message);
+            showToast('Error archiving product: ' + error.message, 'error');
         }
         setActionLoading(false);
     };
@@ -92,74 +117,82 @@ const TrackProduct = ({ contract, account }) => {
 
     return (
         <div className="track-product" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍 Track & Manage</h2>
-                <p style={{ color: 'var(--text-secondary)' }}>Search the blockchain to view provenance or manage your assets.</p>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.03em' }}>Provenance Explorer</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Verify the immutable journey of physical assets on-chain.</p>
             </div>
             
-            <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <form onSubmit={handleSearch} className="search-form-pro">
                 <input
                     type="number"
                     value={productId}
                     onChange={(e) => setProductId(e.target.value)}
                     placeholder="Enter Product ID to track..."
                     required
-                    style={{ flex: 1, margin: 0 }}
                 />
-                <button type="submit" disabled={loading} style={{ margin: 0, width: 'auto' }}>
-                    {loading ? 'Searching...' : 'Search'}
+                <button type="submit" disabled={loading} className="btn-primary search-btn-pro">
+                   <IconSearch /> {loading ? 'Scanning...' : 'Track'}
                 </button>
             </form>
 
+            {loading && (
+                <div className="skeleton-container">
+                    <SkeletonCard />
+                    <SkeletonCard />
+                </div>
+            )}
+
             {productData && (
-                <div className="product-details" style={{ animation: 'fadeIn 0.5s ease-out' }}>
-                    {/* View Panel */}
-                    <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', position: 'relative' }}>
-                        <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
+                <div className="product-details fade-in-up">
+                    <div className="glass-panel info-card">
+                        <div className="status-badge-container">
                             {productData.isActive ? (
-                                <span style={{ background: '#10b981', color: 'black', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)' }}>ACTIVE</span>
+                                <span className="status-badge active">AUTHENTIC</span>
                             ) : (
-                                <span style={{ background: '#ef4444', color: 'white', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)' }}>ARCHIVED</span>
+                                <span className="status-badge archived">ARCHIVED</span>
                             )}
                         </div>
-                        <h3 style={{ marginTop: 0, fontSize: '1.8rem', marginBottom: '0.5rem' }}>📦 {productData.name} <span style={{ color: 'var(--text-secondary)' }}>#{productData.id}</span></h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '1.5rem' }}>{productData.description}</p>
+                        <h3 className="product-title">
+                            <IconPackage /> {productData.name} <span className="product-id-tag">#{productData.id}</span>
+                        </h3>
+                        <p className="product-desc">{productData.description}</p>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
-                            <div>
-                                <small style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.2rem' }}>Origin</small>
-                                <strong>{productData.origin}</strong>
+                        <div className="meta-grid">
+                            <div className="meta-item">
+                                <span className="meta-label">Origin</span>
+                                <span className="meta-value">{productData.origin}</span>
                             </div>
-                            <div>
-                                <small style={{ color: 'var(--primary-color)', display: 'block', marginBottom: '0.2rem' }}>Current Owner</small>
-                                <strong style={{ fontFamily: 'monospace', fontSize: '0.9rem', wordBreak: 'break-all' }}>{productData.currentOwner}</strong>
-                                {isOwner && <span style={{ marginLeft: '0.5rem', background: 'var(--primary-color)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.7rem' }}>YOU</span>}
+                            <div className="meta-item">
+                                <span className="meta-label">Current Custodian</span>
+                                <span className="meta-value address">{productData.currentOwner}</span>
+                                {isOwner && <span className="you-pill">YOU</span>}
                             </div>
                         </div>
                     </div>
 
                     {/* Owner Action Panel */}
                     {isOwner && productData.isActive && (
-                        <div className="glass-panel owner-controls" style={{ padding: '2rem', marginBottom: '2rem', border: '1px solid var(--primary-color)', background: 'rgba(99, 102, 241, 0.05)' }}>
-                            <h3 style={{ marginTop: 0, color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                👑 Owner Controls
-                            </h3>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>You hold the private keys for this asset. You can append logs or transfer ownership.</p>
+                        <div className="glass-panel owner-controls">
+                            <div className="owner-controls-header">
+                                <h3>👑 Owner Controls</h3>
+                                <p>You hold the private keys for this asset. You can append logs or transfer ownership.</p>
+                            </div>
                             
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                            <div className="owner-action-grid">
                                 {/* Update Status Form */}
                                 <div>
-                                    <h4 style={{ marginBottom: '1rem' }}>📍 Append Status</h4>
-                                    <form onSubmit={handleUpdate}>
-                                        <input
-                                            type="text"
-                                            value={updateDetails}
-                                            onChange={(e) => setUpdateDetails(e.target.value)}
-                                            placeholder="e.g., Arrived at Checkpoint Bravo"
-                                            required
-                                            style={{ marginBottom: '1rem' }}
-                                        />
-                                        <button type="submit" disabled={actionLoading} style={{ margin: 0, padding: '0.6rem 1rem', fontSize: '0.9rem' }}>
+                                    <h4 className="meta-label" style={{ marginBottom: '1.25rem', display: 'block' }}>📍 Append Status</h4>
+                                    <form onSubmit={handleUpdate} className="form-pro">
+                                        <div className="input-field">
+                                            <input
+                                                type="text"
+                                                value={updateDetails}
+                                                onChange={(e) => setUpdateDetails(e.target.value)}
+                                                placeholder="e.g., Arrived at Checkpoint Bravo"
+                                                required
+                                            />
+                                        </div>
+                                        <button type="submit" disabled={actionLoading} className="btn-primary" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}>
                                             {actionLoading ? 'Updating...' : 'Log Event'}
                                         </button>
                                     </form>
@@ -167,72 +200,78 @@ const TrackProduct = ({ contract, account }) => {
 
                                 {/* Transfer Ownership Form */}
                                 <div>
-                                    <h4 style={{ marginBottom: '1rem' }}>🔄 Transfer Asset</h4>
-                                    <form onSubmit={handleTransfer}>
-                                        <input
-                                            type="text"
-                                            value={transferAddress}
-                                            onChange={(e) => setTransferAddress(e.target.value)}
-                                            placeholder="Recipient Address (0x...)"
-                                            required
-                                            style={{ marginBottom: '0.5rem' }}
-                                        />
-                                        <input
-                                            type="text"
-                                            value={transferDetails}
-                                            onChange={(e) => setTransferDetails(e.target.value)}
-                                            placeholder="Transfer Details/Invoice Ref"
-                                            required
-                                            style={{ marginBottom: '1rem' }}
-                                        />
-                                        <button type="submit" disabled={actionLoading} style={{ margin: 0, padding: '0.6rem 1rem', fontSize: '0.9rem', background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                                    <h4 className="meta-label" style={{ marginBottom: '1.25rem', display: 'block' }}>🔄 Transfer Asset</h4>
+                                    <form onSubmit={handleTransfer} className="form-pro">
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                            <input
+                                                type="text"
+                                                value={transferAddress}
+                                                onChange={(e) => setTransferAddress(e.target.value)}
+                                                placeholder="Recipient Address (0x...)"
+                                                required
+                                            />
+                                            <input
+                                                type="text"
+                                                value={transferDetails}
+                                                onChange={(e) => setTransferDetails(e.target.value)}
+                                                placeholder="Transfer Details/Invoice Ref"
+                                                required
+                                            />
+                                        </div>
+                                        <button type="submit" disabled={actionLoading} className="btn-success">
                                             {actionLoading ? 'Transferring...' : 'Transfer to New Owner'}
                                         </button>
                                     </form>
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                <button type="button" onClick={handleDeactivate} disabled={actionLoading} style={{ background: '#ef4444', color: 'white', padding: '0.6rem 1rem', fontSize: '0.9rem', width: 'auto', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
+                            <div className="owner-action-footer">
+                                <button type="button" onClick={handleDeactivate} disabled={actionLoading} className="btn-danger">
                                     🗄️ Decommission / Archive Product
                                 </button>
-                                <span style={{ marginLeft: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Permanent action. Disables further updates or transfers.</span>
+                                <p>Permanent action. Disables further updates or transfers.</p>
                             </div>
                         </div>
                     )}
                     
                     {/* Read-only notification if not owner or not active */}
                     {!(isOwner && productData.isActive) && (
-                        <div style={{ marginBottom: '2rem', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                            {!productData.isActive ? "This product is archived and cannot be modified." : "You are viewing this product as a guest. Only the current owner can append logs."}
+                        <div style={{ marginBottom: '3rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', textAlign: 'center', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                            {!productData.isActive ? "This asset has been permanently archived." : "Guest View: Connect owner wallet to update status or transfer."}
                         </div>
                     )}
 
                     {/* Timeline */}
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>⏱️ Blockchain Timeline</h3>
-                    <div className="timeline" style={{ background: 'rgba(0,0,0,0.2)', padding: '2rem', borderRadius: '16px' }}>
-                        {productData.history.map((event, index) => {
-                            const date = new Date(Number(event.timestamp) * 1000).toLocaleString();
-                            let icon = '📝';
-                            let color = 'var(--text-primary)';
-                            
-                            if (event.action === 'Created') { icon = '✨'; color = '#10b981'; } /* Green */
-                            if (event.action === 'Transferred') { icon = '🔄'; color = '#3b82f6'; } /* Blue */
-                            if (event.action === 'Updated') { icon = '📍'; color = '#f59e0b'; } /* Yellow/Orange */
-                            if (event.action === 'Deactivated') { icon = '🗄️'; color = '#ef4444'; } /* Red */
+                    <div className="blockchain-journey">
+                        <h3 className="journey-header">
+                            <IconHistory /> Blockchain Provenance
+                        </h3>
+                        <div className="timeline-pro">
+                            {productData.history.map((event, index) => {
+                                const date = new Date(Number(event.timestamp) * 1000).toLocaleString('en-US', {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                });
+                                let colorClass = 'event-primary';
+                                if (event.action === 'Created') colorClass = 'event-success';
+                                if (event.action === 'Transferred') colorClass = 'event-transfer';
+                                if (event.action === 'Updated') colorClass = 'event-warning';
+                                if (event.action === 'Deactivated') colorClass = 'event-danger';
 
-                            return (
-                                <div key={index} className="timeline-item" style={{ marginBottom: index === productData.history.length - 1 ? 0 : '2rem', borderLeft: `2px solid ${color}`, paddingLeft: '1.5rem', position: 'relative' }}>
-                                    <div style={{ position: 'absolute', left: '-1rem', top: '0', background: 'var(--bg-color)', borderRadius: '50%', padding: '0.2rem', fontSize: '1.2rem', border: `1px solid ${color}` }}>{icon}</div>
-                                    <h4 style={{ margin: '0 0 0.5rem 0', color: color, fontSize: '1.1rem' }}>{event.action}</h4>
-                                    <p style={{ margin: '0 0 0.5rem 0', fontStyle: 'italic', fontSize: '1.05rem' }}>"{event.details}"</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.7, fontSize: '0.85rem' }}>
-                                        <span><strong>By:</strong> <span style={{ fontFamily: 'monospace' }}>{event.actor}</span></span>
-                                        <span>{date}</span>
+                                return (
+                                    <div key={index} className={`timeline-card ${colorClass}`}>
+                                        <div className="card-header">
+                                            <span className="action-tag">{event.action.toUpperCase()}</span>
+                                            <span className="timestamp">{date}</span>
+                                        </div>
+                                        <p className="details">{event.details}</p>
+                                        <div className="actor-badge">
+                                            <span className="actor-label">Verified Actor:</span>
+                                            <span className="actor-address">{event.actor.slice(0, 12)}...{event.actor.slice(-8)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             )}

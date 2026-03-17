@@ -1,17 +1,24 @@
 :root {
-  --bg-color: #0b1120;
-  --surface-color: rgba(30, 41, 59, 0.4);
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
-  --secondary-color: #ec4899;
-  --text-primary: #f8fafc;
+  --bg-color: #030a1c;
+  --surface-color: rgba(15, 23, 42, 0.4);
+  --primary-color: #4f46e5;
+  --primary-glow: rgba(79, 70, 229, 0.4);
+  --secondary-color: #3b82f6;
+  --accent-color: #818cf8;
+  --text-primary: #ffffff;
   --text-secondary: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(15, 23, 42, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --text-tertiary: #64748b;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(15, 23, 42, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  
+  /* Mockup Specific Gradients */
+  --grad-primary: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  --grad-text: linear-gradient(135deg, #3b82f6 0%, #818cf8 100%);
+  
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
 
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -27,12 +34,14 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
   /* Background is now handled by the .background-blobs container */
   background: transparent;
+}
+
+#root {
+  width: 100%;
 }
 
 /* Scrollbar styling */
@@ -54,7 +63,7 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Animated Background Blobs */
+/* Advanced Mesh Background */
 .background-blobs {
   position: fixed;
   top: 0;
@@ -64,54 +73,48 @@ body {
   z-index: -1;
   overflow: hidden;
   background-color: var(--bg-color);
+  background: radial-gradient(at 0% 0%, #0c1445 0, transparent 50%),
+              radial-gradient(at 50% 0%, #030a1c 0, transparent 50%),
+              radial-gradient(at 100% 0%, #0f172a 0, transparent 50%);
 }
 
 .blob {
   position: absolute;
-  filter: blur(90px);
-  border-radius: 50%;
-  animation: float 20s infinite ease-in-out;
-  opacity: 0.5;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  filter: blur(80px);
+  opacity: 0.4;
   mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 .blob-1 {
-  top: -10%;
-  left: -10%;
-  width: 50vw;
-  height: 50vw;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.6), transparent 70%);
-  animation-delay: 0s;
+  top: -200px;
+  left: -200px;
+  animation: meshFloat 25s infinite alternate ease-in-out;
 }
 
 .blob-2 {
-  bottom: -20%;
-  right: -10%;
-  width: 60vw;
-  height: 60vw;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.5), transparent 70%);
-  animation-delay: -5s;
+  bottom: -300px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+  animation: meshFloat 30s infinite alternate-reverse ease-in-out;
 }
 
 .blob-3 {
-  top: 40%;
-  left: 30%;
-  width: 40vw;
-  height: 40vw;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.4), transparent 70%);
-  animation-delay: -10s;
+  top: 30%;
+  left: 40%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.15) 0%, transparent 70%);
+  animation: meshFloat 20s infinite alternate ease-in-out;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-  }
-  33% {
-    transform: translate(10%, 15%) scale(1.1) rotate(10deg);
-  }
-  66% {
-    transform: translate(-10%, 5%) scale(0.9) rotate(-10deg);
-  }
+@keyframes meshFloat {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(100px, 50px) scale(1.1) rotate(5deg); }
+  100% { transform: translate(-50px, 100px) scale(0.9) rotate(-5deg); }
 }
 
 h1 {

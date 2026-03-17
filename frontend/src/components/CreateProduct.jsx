@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { ethers } from 'ethers';
 
-const CreateProduct = ({ contract }) => {
+const IconPlus = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const CreateProduct = ({ contract, showToast }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [origin, setOrigin] = useState('');
@@ -14,24 +19,27 @@ const CreateProduct = ({ contract }) => {
         try {
             const tx = await contract.createProduct(name, description, origin);
             await tx.wait();
-            alert('Product created successfully!');
+            showToast('Product created successfully!', 'success');
             setName('');
             setDescription('');
             setOrigin('');
         } catch (error) {
             console.error(error);
-            alert('Error creating product: ' + error.message);
+            showToast('Error creating product: ' + error.message, 'error');
         }
         setLoading(false);
     };
 
     return (
-        <div className="create-product" style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨ Create New Product</h2>
-                <p style={{ color: 'var(--text-secondary)' }}>Mint a new item to the supply chain blockchain.</p>
+        <div className="create-product fade-in-up">
+            <div className="create-asset-header">
+                <div className="icon-plus-wrapper">
+                    <IconPlus />
+                </div>
+                <h2 className="pro-title">Create New Asset</h2>
+                <p className="pro-subtitle">Mint a unique digital twin to the blockchain for permanent tracing.</p>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="form-pro">
                 <div>
                     <label>Product Name:</label>
                     <input
