@@ -2,6 +2,7 @@
 *.odt
 *.py
 *.txt
+Project_Report.md
 
 # Security & Secrets
 .env*
